@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"html"
 	"net/http"
 
 	"github.com/redis/go-redis/v9"
@@ -14,7 +15,7 @@ type Response struct {
 	Value string `json: "value"`
 }
 
-type infoResponse struct {
+type InfoResponse struct {
 	Msg string `json: "msg"`
 }
 
@@ -39,7 +40,7 @@ func get_key(w http.ResponseWriter, r *http.Request) { // функция обр�
 
 	val, err := client.Get(ctx, key).Result()
 	if err != nil {
-		infoResp := infoResponse{Msg: "There is no such key."}
+		infoResp := InfoResponse{Msg: "There is no such key."}
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(404)                  // если такого ключа нет в редисе, то 404
 		json.NewEncoder(w).Encode(infoResp) // возвращаем json
@@ -66,7 +67,7 @@ func set_key(w http.ResponseWriter, r *http.Request) { // функция обр�
 
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest) // ошибка отправленных данных
-		infoResp := infoResponse{Msg: "Invalid key or value type! Must be string."}
+		infoResp := InfoResponse{Msg: "Invalid key or value type! Must be string."}
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(infoResp) // возвращаем json
 		return
@@ -100,7 +101,7 @@ func set_key(w http.ResponseWriter, r *http.Request) { // функция обр�
 		empty_value = "Notice, that value was empty!"
 	}
 
-	infoResp := infoResponse{Msg: fmt.Sprintf("%s %s", response_string, empty_value)} // формируем json ответ
+	infoResp := InfoResponse{Msg: fmt.Sprintf("%s %s", response_string, empty_value)} // формируем json ответ
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(201)
 	json.NewEncoder(w).Encode(infoResp) // возвращаем json
@@ -116,7 +117,7 @@ func del_key(w http.ResponseWriter, r *http.Request) { // функция обр�
 
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest) // ошибка отправленных данных
-		infoResp := infoResponse{Msg: "Invalid key type! Must be string."}
+		infoResp := InfoResponse{Msg: "Invalid key type! Must be string."}
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(infoResp) // возвращаем json
 		return
@@ -134,7 +135,7 @@ func del_key(w http.ResponseWriter, r *http.Request) { // функция обр�
 	_, err = client.Get(ctx, key).Result()
 
 	if err != nil { // если такого ключа нет в БД, то ошибку
-		infoResp := infoResponse{Msg: "There is no such key."}
+		infoResp := InfoResponse{Msg: "There is no such key."}
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(404)
 		json.NewEncoder(w).Encode(infoResp) // возвращаем json
@@ -146,11 +147,19 @@ func del_key(w http.ResponseWriter, r *http.Request) { // функция обр�
 		panic(err)
 	}
 
-	infoResp := infoResponse{Msg: "Key sucessfully deleted!"}
+	infoResp := InfoResponse{Msg: "Key sucessfully deleted!"}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(201)
 	json.NewEncoder(w).Encode(infoResp) // возвращаем json
 
+}
+
+func Check_endpoint(r *http.Request) bool {
+	url := html.EscapeString(r.URL.Path)
+	if url != "/" {
+		return false
+	}
+	return true
 }
 
 func HandleRequest() {

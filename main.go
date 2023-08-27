@@ -16,6 +16,19 @@ import (
 func home_page(w http.ResponseWriter, r *http.Request) {
 	fmt.Println(r.FormValue("key_get"))
 
+	// проверка, что переход только по разрешенным эндпоинтам
+	if !endpnts.Check_endpoint(r) {
+		infoResp := endpnts.InfoResponse{Msg: "Forbidden"}
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(403)                  // на все некорректные uri отвечаем 403
+		json.NewEncoder(w).Encode(infoResp) // возвращаем json
+		return
+	}
+
+	//http.NotFound(w, r)
+
+	//fmt.Println(r.URL)
+
 	var show_data endpnts.ShowData
 
 	var s string
@@ -104,6 +117,14 @@ func home_page(w http.ResponseWriter, r *http.Request) {
 }
 
 func without_interface(w http.ResponseWriter, r *http.Request) {
+	// проверка, что переход только по разрешенным эндпоинтам
+	if !endpnts.Check_endpoint(r) { //
+		infoResp := endpnts.InfoResponse{Msg: "Forbidden"}
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(403)                  // на все некорректные uri отвечаем 403
+		json.NewEncoder(w).Encode(infoResp) // возвращаем json
+		return
+	}
 	fmt.Fprintf(w, "<h1>App is running!</h1>")
 }
 
